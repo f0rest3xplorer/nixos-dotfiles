@@ -15,6 +15,7 @@
 
   # VMWare guest tools
   virtualisation.vmware.guest.enable = true;
+  hardware.graphics.enable = true;
 
   # Use the systemd-boot EFI boot loader.
   boot.loader.systemd-boot.enable = true;
@@ -97,12 +98,24 @@
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
 
+  programs.hyprland.enable = true;
+
+  environment.sessionVariables.NIXOS_OZONE_WL = 1;
+
   # List packages installed in system profile.
-  # You can use https://search.nixos.org/ to find more packages (and options).
-  # environment.systemPackages = with pkgs; [
-  #   vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
-  #   wget
-  # ];
+   environment.systemPackages = with pkgs; [
+      git
+      vim
+      curl
+      wget
+   ];
+
+   fonts.packages = with pkgs; [
+      font-awesome
+      nerd-fonts.symbols-only
+      nerd-fonts.jetbrains-mono
+   ];
+
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.

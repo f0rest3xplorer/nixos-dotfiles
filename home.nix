@@ -34,7 +34,7 @@ in
    home.homeDirectory = "/home/f0rest3xplorer";
    home.stateVersion = "26.05";
 
-   xdg.configFile."quickshell/shell.qml".source = config.lib.file.mkOutOfStoreSymlink "/home/f0rest3xplorer/nixos-config/shell.qml";
+   xdg.configFile."quickshell".source = config.lib.file.mkOutOfStoreSymlink "/home/f0rest3xplorer/nixos-config/quickshell";
    xdg.configFile."nvim".source = config.lib.file.mkOutOfStoreSymlink "/home/f0rest3xplorer/nixos-config/nvim";
 
    programs.home-manager.enable = true;
@@ -141,6 +141,8 @@ in
       kitty
       foot
       wofi
+      vscodium
+      btop
       # waybar
       dunst
       quickshell
@@ -151,6 +153,8 @@ in
       # for key bindings
       grim slurp wl-clipboard
       swaybg
+      material-icons
+      material-symbols
    ];
 
    home.sessionVariables.EDITOR = "nvim";

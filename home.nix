@@ -39,6 +39,9 @@ in
 
    programs.home-manager.enable = true;
 
+   # Make fonts installed via home.packages visible to fontconfig
+   fonts.fontconfig.enable = true;
+
    wayland.windowManager.hyprland = {
       enable = true;
       package = null;
@@ -126,8 +129,8 @@ in
                "hyprland.start"
                (lib.generators.mkLuaInline ''
                   function()
-                     hl.exec_cmd("env QT_QUICK_BACKEND=software quickshell")
-                     hl.exec_cmd("swaybg -i /home/f0rest3xplorer/Pictures/artemis.jpg -m fill &")
+                    hl.exec_cmd("env QT_QUICK_BACKEND=software ${pkgs.quickshell} > /tmp/qs.log 2>&1")
+                    hl.exec_cmd("swaybg -i /home/f0rest3xplorer/Pictures/artemis.jpg -m fill &")
                   end
                '')
             ];
@@ -153,8 +156,9 @@ in
       # for key bindings
       grim slurp wl-clipboard
       swaybg
-      material-icons
+      # fonts and icons for the bar
       material-symbols
+      nerd-fonts.jetbrains-mono
    ];
 
    home.sessionVariables.EDITOR = "nvim";

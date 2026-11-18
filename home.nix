@@ -121,6 +121,10 @@ in
             (mouse "mouse:272" "hl.dsp.window.drag()")
             (mouse "mouse:273" "hl.dsp.window.resize()")
 
+            # Themes
+            (bind "T"         ''hl.dsp.exec_cmd("qs ipc call theme next")'')
+            (bind "SHIFT + T" ''hl.dsp.exec_cmd("qs ipc call theme prev")'')
+
          ] ++ workspaceBinds;
 
          # startup apps
@@ -129,7 +133,7 @@ in
                "hyprland.start"
                (lib.generators.mkLuaInline ''
                   function()
-                    hl.exec_cmd("env QT_QUICK_BACKEND=software ${pkgs.quickshell} > /tmp/qs.log 2>&1")
+                    hl.exec_cmd("env QT_QUICK_BACKEND=software ${pkgs.quickshell}/bin/quickshell > /tmp/qs.log 2>&1")
                     hl.exec_cmd("swaybg -i /home/f0rest3xplorer/Pictures/artemis.jpg -m fill &")
                   end
                '')

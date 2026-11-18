@@ -6,13 +6,18 @@ Rectangle {
 
   property string icon: ""
   property string label: ""
-  property color iconColor: "#3dd1b0"
+  property color iconColor: Theme.accent
   property int maxLabelWidth: 400
+
+  signal clicked()
+  signal rightClicked()
 
   implicitWidth: row.implicitWidth + 22
   implicitHeight: 33
   radius: height / 2
-  color: "#040e0d"
+  color: Theme.pill
+
+  Behavior on color { ColorAnimation { duration: 200 } }
 
   RowLayout {
     id: row
@@ -22,18 +27,29 @@ Rectangle {
     Text {
       text: root.icon
       color: root.iconColor
-      font.family: "Material Symbols Rounded"
-      font.pixelSize: 18
+      font.family: Theme.iconFont
+      font.pixelSize: 15
+
+      Behavior on color { ColorAnimation { duration: 200 } }
     }
 
     Text {
       text: root.label
-      color: "#f5e2c5"
-      font.family: "JetBrainsMono Nerd Font"
+      color: Theme.text
+      font.family: Theme.font
       font.pixelSize: 16
       elide: Text.ElideRight
       Layout.maximumWidth: root.maxLabelWidth
       visible: root.label != ""
+
+      Behavior on color { ColorAnimation { duration: 200 } }
     }
+  }
+
+  // Only intercepts clicks if something is actually listening
+  MouseArea {
+    anchors.fill: parent
+    acceptedButtons: Qt.LeftButton | Qt.RightButton
+    onClicked: mouse => mouse.button === Qt.RightButton ? root.rightClicked() : root.clicked()
   }
 }

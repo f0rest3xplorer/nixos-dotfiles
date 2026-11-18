@@ -100,7 +100,7 @@ PanelWindow {
     spacing: 8
 
     Pill {
-      icon: "media_output"
+      icon: "music_note"
       label: bar.nowPlaying
       maxLabelWidth: 200
     }
@@ -122,15 +122,23 @@ PanelWindow {
     anchors.rightMargin: 24
     spacing: 8
 
-    Pill { icon: "memory"; label: bar.cpuPercent + "%"; iconColor: "#3dd1b0" }
-    Pill { icon: "storage"; label: bar.memUsed + " GB"; iconColor: "#ffa478" }
-    Pill { icon: "volume_up"; label: vol.value + "%"; iconColor: "#ffa478" }
-    Pill { icon: "speed"; label: net.value; iconColor: "#ffa478" }
+    Pill { icon: "memory"; label: bar.cpuPercent + "%" }
+    Pill { icon: "storage"; label: bar.memUsed + " GB"; iconColor: Theme.warn }
+    Pill { icon: "volume_up"; label: vol.value + "%"; iconColor: Theme.cool }
+    Pill { icon: "speed"; label: net.value; iconColor: Theme.cool }
 
     Pill {
       icon: bar.vpnDown ? "key_off" : "vpn_key"
       label: vpn.value
-      iconColor: bar.vpnDown ? "#ffa478" : "#3dd1b0"
+      iconColor: bar.vpnDown ? Theme.warn : Theme.accent
+    }
+
+    // Theme switcher: left-click = next, right-click = previous
+    Pill {
+      icon: "palette"
+      label: Theme.name
+      onClicked: Theme.next()
+      onRightClicked: Theme.prev()
     }
   }
 }

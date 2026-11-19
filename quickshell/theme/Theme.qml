@@ -1,4 +1,3 @@
-// Theme.qml
 pragma Singleton
 import Quickshell
 import Quickshell.Io
@@ -11,41 +10,62 @@ Singleton {
     teal: {
       accent: "#3dd1b0", warn: "#ffa478", cool: "#7cc4e0",
       pill: "#040e0d", pillAlt: "#0f1f22",
-      text: "#f5e2c5", dim: "#3a5a57", faint: "#1c2f31"
+      text: "#f5e2c5", dim: "#3a5a57", faint: "#1c2f31",
+      red: "#e5736b", green: "#8bd48a", yellow: "#e6c27a",
+      blue: "#6ba8e0", magenta: "#c58fc9", cyan: "#3dd1b0",
+      dark: true
     },
     nord: {
       accent: "#88c0d0", warn: "#ebcb8b", cool: "#81a1c1",
       pill: "#2e3440", pillAlt: "#3b4252",
-      text: "#eceff4", dim: "#4c566a", faint: "#434c5e"
+      text: "#eceff4", dim: "#4c566a", faint: "#434c5e",
+      red: "#bf616a", green: "#a3be8c", yellow: "#ebcb8b",
+      blue: "#81a1c1", magenta: "#b48ead", cyan: "#88c0d0",
+      dark: true
     },
     rose: {
       accent: "#f38ba8", warn: "#fab387", cool: "#89b4fa",
       pill: "#1e1e2e", pillAlt: "#313244",
-      text: "#cdd6f4", dim: "#585b70", faint: "#45475a"
+      text: "#cdd6f4", dim: "#585b70", faint: "#45475a",
+      red: "#f38ba8", green: "#a6e3a1", yellow: "#f9e2af",
+      blue: "#89b4fa", magenta: "#cba6f7", cyan: "#94e2d5",
+      dark: true
     },
     sunset: {
       accent: "#f5a24d", warn: "#e0674a", cool: "#8fb4cc",
       pill: "#16100d", pillAlt: "#261a14",
       text: "#f7e6cc", dim: "#7a5a45", faint: "#33261d",
-      wallpaper: "sunrise.jpeg"
+      wallpaper: "sunrise.jpeg",
+      red: "#e0604f", green: "#a8b86a", yellow: "#f0c36a",
+      blue: "#8fb4cc", magenta: "#c58a9f", cyan: "#7fb8a8",
+      dark: true
     },
     eclipse: {
       accent: "#d9d3c7", warn: "#e8a76a", cool: "#8aa8d6",
       pill: "#07080b", pillAlt: "#14161b",
       text: "#ece7dd", dim: "#4a4c52", faint: "#1d1f24",
-      wallpaper: "artemis.jpg"
+      wallpaper: "artemis.jpg",
+      red: "#d97a6c", green: "#9bb58a", yellow: "#e8c07a",
+      blue: "#8aa8d6", magenta: "#b59ac4", cyan: "#8ac0c8",
+      dark: true
     },
     frost: {
       accent: "#8fb8a0", warn: "#d98b5f", cool: "#8fb0c8",
       pill: "#101a18", pillAlt: "#1b2a27",
       text: "#e8eeea", dim: "#4d6560", faint: "#26332f",
-      wallpaper: "snowytrees.JPG"
+      wallpaper: "snowytrees.JPG",
+      red: "#d9806b", green: "#8fb8a0", yellow: "#d9b872",
+      blue: "#8fb0c8", magenta: "#b595b0", cyan: "#7fc0b8",
+      dark: true
     },
     frostLight: {
       accent: "#3f6b57", warn: "#c0612f", cool: "#4a7a9a",
       pill: "#eef2ef", pillAlt: "#dde5e0",
       text: "#1a2622", dim: "#8da39a", faint: "#c9d4ce",
-      wallpaper: "snowytrees.JPG"
+      wallpaper: "snowytrees.JPG",
+      red: "#b5493a", green: "#3f6b57", yellow: "#9a7418",
+      blue: "#3f6f94", magenta: "#8a5a88", cyan: "#2f7f78",
+      dark: false
     }
   })
 
@@ -60,6 +80,18 @@ Singleton {
   readonly property color text:    current.text
   readonly property color dim:     current.dim
   readonly property color faint:   current.faint
+
+  // Hues for status colours, terminal ANSI colours, etc. A palette that
+  // doesn't define one falls back to the closest core colour.
+  readonly property color red:     current.red     ?? current.warn
+  readonly property color green:   current.green   ?? current.accent
+  readonly property color yellow:  current.yellow  ?? current.warn
+  readonly property color blue:    current.blue    ?? current.cool
+  readonly property color magenta: current.magenta ?? current.accent
+  readonly property color cyan:    current.cyan    ?? current.cool
+
+  // false for light palettes; drives the system light/dark preference
+  readonly property bool dark: current.dark ?? true
 
   readonly property string font: "JetBrainsMono Nerd Font"
   readonly property string iconFont: "Material Symbols Rounded"
@@ -80,6 +112,9 @@ Singleton {
 
   // Starts the new swaybg first, then kills the old one, so there's no blank flash
   function applyWallpaper() {
+    // A previous swap is still running (it sleeps briefly); retry once it's done
+    // instead of silently dropping this change
+    if (wpProc.running) { wpTimer.restart(); return }
     wpProc.command = [
       "sh", "-c",
       'old=$(pgrep -x swaybg); setsid swaybg -i "$1" -m fill >/dev/null 2>&1 & sleep 0.3; [ -n "$old" ] && kill $old',
@@ -95,8 +130,46 @@ Singleton {
     onTriggered: root.applyWallpaper()
   }
 
-  onNameChanged: wpTimer.restart()
-  Component.onCompleted: wpTimer.restart()
+  // ---- System-wide theming ----
+  // Renders theme/templates/* into other apps' config files and reloads them.
+  // See theme/apply-theme.py and theme/targets.json.
+
+  readonly property var colorKeys: [
+    "accent", "warn", "cool", "red", "green", "yellow", "blue", "magenta", "cyan",
+    "pill", "pillAlt", "text", "dim", "faint"
+  ]
+
+  // The resolved palette (fallbacks included), handed to the script as JSON
+  function snapshot() {
+    const o = { name: name, dark: dark }
+    for (const k of colorKeys) o[k] = String(root[k])
+    return JSON.stringify(o)
+  }
+
+  Process {
+    id: sysProc
+    stdout: StdioCollector {
+      onStreamFinished: if (text.trim()) console.log("apply-theme:", text.trim())
+    }
+    stderr: StdioCollector {
+      onStreamFinished: if (text.trim()) console.warn("apply-theme:", text.trim())
+    }
+  }
+
+  function applySystem() {
+    if (sysProc.running) { sysTimer.restart(); return }
+    sysProc.command = ["python3", Quickshell.shellPath("theme/apply-theme.py"), snapshot()]
+    sysProc.running = true
+  }
+
+  Timer {
+    id: sysTimer
+    interval: 200
+    onTriggered: root.applySystem()
+  }
+
+  onNameChanged: { wpTimer.restart(); sysTimer.restart() }
+  Component.onCompleted: { wpTimer.restart(); sysTimer.restart() }
 
   // ---- Switching ----
 
@@ -122,6 +195,7 @@ Singleton {
     function next(): void { root.next() }
     function prev(): void { root.prev() }
     function get(): string { return root.name }
+    function apply(): void { sysTimer.restart() }
   }
 
   // Remember the choice across restarts

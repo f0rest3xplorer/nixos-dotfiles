@@ -55,8 +55,8 @@ in
             };
             general = {
                 border_size = 2;
-                gaps_in = 6;     # between windows
-                gaps_out = 20;   # screen edge, matches your bar's 20px side margins
+                gaps_in = 3;     # between windows
+                gaps_out = 8;   # screen edge, matches your bar's 20px side margins
                 col = {
                   active_border   = "rgba(3dd1b0ff)";
                   inactive_border = "rgba(1c2f31ff)";
@@ -66,7 +66,7 @@ in
               decoration = {
                 rounding = 12;
                 active_opacity = 1.0;
-                inactive_opacity = 0.92;
+                inactive_opacity = 0.90;
                 blur   = { enabled = false; };
                 shadow = { enabled = false; };
               };
@@ -88,6 +88,7 @@ in
             (bind "D"      ''hl.dsp.exec_cmd("wofi --show drun")'')
             (bind "B"      ''hl.dsp.exec_cmd("firefox")'')
             (bind "E"      ''hl.dsp.exec_cmd("dolphin")'')
+            (bind "SPACE"  ''hl.dsp.exec_cmd("qs ipc call applauncher toggle")'')
 
             # window management
             (bind "C"      ''hl.dsp.window.close()'')
@@ -139,6 +140,7 @@ in
             (bind "T"         ''hl.dsp.exec_cmd("qs ipc call theme next")'')
             (bind "SHIFT + T" ''hl.dsp.exec_cmd("qs ipc call theme prev")'')
 
+
          ] ++ workspaceBinds;
 
          # startup apps
@@ -176,6 +178,8 @@ in
       # fonts and icons for the bar
       material-symbols
       nerd-fonts.jetbrains-mono
+      # media
+      cider-2
    ];
 
    home.sessionVariables.EDITOR = "nvim";

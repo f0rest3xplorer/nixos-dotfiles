@@ -1,0 +1,11 @@
+{
+  "targets": [
+    { "template": "hyprland.lua",   "output": "hyprland.lua",   "reload": "hyprctl reload" },
+    { "template": "kitty.conf",     "output": "kitty.conf",     "reload": "pkill -USR1 -x kitty || true" },
+    { "template": "alacritty.toml", "output": "alacritty.toml" },
+    { "template": "gtk.css",        "output": "gtk.css" }
+  ],
+  "hooks": [
+    "dconf write /org/gnome/desktop/interface/color-scheme \"'{{scheme}}'\""
+  ]
+}

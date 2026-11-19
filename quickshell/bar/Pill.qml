@@ -1,3 +1,4 @@
+import "../theme"
 import QtQuick
 import QtQuick.Layouts
 
@@ -52,7 +53,7 @@ Rectangle {
     }
   }
 
-  // Only intercepts clicks if something is actually listening
+  // Left click -> clicked(), right click -> rightClicked()
   MouseArea {
     anchors.fill: parent
     acceptedButtons: Qt.LeftButton | Qt.RightButton

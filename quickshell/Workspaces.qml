@@ -7,6 +7,7 @@ Rectangle {
   id: root
 
   property int minCount: 5
+  property bool framed: true
 
   readonly property var ids: {
     const set = new Set()
@@ -15,10 +16,10 @@ Rectangle {
     return Array.from(set).sort((a, b) => a - b)
   }
 
-  implicitWidth: row.implicitWidth + 22
+  implicitWidth: row.implicitWidth + (framed ? 22 : 0)
   implicitHeight: 33
   radius: height / 2
-  color: Theme.pillAlt
+  color: framed ? Theme.pillAlt : "transparent"
 
   Behavior on color { ColorAnimation { duration: 200 } }
 
@@ -51,7 +52,10 @@ Rectangle {
         MouseArea {
           anchors.fill: parent
           anchors.margins: -4
-          onClicked: Hyprland.dispatch("workspace " + parent.wsId)
+          // cursorShape: Qt.PointingHandCursor
+          onClicked: Quickshell.execDetached([
+            "hyprctl", "dispatch", "hl.dsp.focus({ workspace = " + parent.wsId + " })"
+          ])
         }
       }
     }

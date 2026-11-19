@@ -3,6 +3,7 @@ import Quickshell.Io
 import Quickshell.Services.Mpris
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Shapes
 
 PanelWindow {
   id: bar
@@ -22,18 +23,15 @@ PanelWindow {
     return parts.length > 0 ? parts.join(" -- ") : "Unknown"
   }
 
+  property int slant: 24
+  property int slantRadius: 14
+
   anchors { top: true; left: true; right: true }
-  margins { top: 13; left: 20; right: 20 }
-  implicitHeight: 40
+  margins { top: 0; left: 30; right: 30 }
+  implicitHeight: 36
   color: "transparent"
 
   // ---- Command pollers ----
-
-  Poller {
-    id: clock
-    command: "date +%H:%M"
-    interval: 60000
-  }
 
   Poller {
     id: vol
@@ -92,49 +90,150 @@ PanelWindow {
 
   // ---- Layout ----
 
-  RowLayout {
-    id: leftGroup
-    anchors.left: parent.left
-    anchors.verticalCenter: parent.verticalCenter
-    anchors.leftMargin: 14
-    spacing: 8
+  SystemClock { id: sysClock; precision: SystemClock.Minutes }
 
-    Pill {
+  // One continuous bar: full width at the top, narrower at the bottom
+  // One continuous bar with softened bottom corners
+  Shape {
+    id: bg
+    anchors.fill: parent
+    antialiasing: true
+
+    // Length of a slanted edge, used to step back along it
+    readonly property real edge: Math.sqrt(bar.slant * bar.slant + height * height)
+    readonly property real dx: bar.slantRadius * bar.slant / edge
+    readonly property real dy: bar.slantRadius * height / edge
+
+    ShapePath {
+      fillColor: Theme.pillGlass
+      strokeColor: "transparent"
+      strokeWidth: -1
+
+      // Top edge, left to right
+      startX: 0; startY: 0
+      PathLine { x: bg.width; y: 0 }
+
+      // Right slant, then rounded corner into the bottom edge
+      PathLine { x: bg.width - bar.slant + bg.dx; y: bg.height - bg.dy }
+      PathQuad {
+        x: bg.width - bar.slant - bar.slantRadius; y: bg.height
+        controlX: bg.width - bar.slant;            controlY: bg.height
+      }
+
+      // Bottom edge, then rounded corner into the left slant
+      PathLine { x: bar.slant + bar.slantRadius; y: bg.height }
+      PathQuad {
+        x: bar.slant - bg.dx; y: bg.height - bg.dy
+        controlX: bar.slant;  controlY: bg.height
+      }
+
+      // Left slant back up to the start
+      PathLine { x: 0; y: 0 }
+
+      Behavior on fillColor { ColorAnimation { duration: 200 } }
+    }
+  } 
+
+  // Left: workspace dots straight on the bar
+  Workspaces {
+    framed: false
+    anchors.left: parent.left
+    anchors.leftMargin: bar.slant /2 + 20
+    anchors.verticalCenter: parent.verticalCenter
+  }
+
+  // Center: raised tab with date, inset clock, month
+  Rectangle {
+    id: tab
+    anchors.horizontalCenter: parent.horizontalCenter
+    anchors.top: parent.top
+    height: parent.height
+    width: tabRow.implicitWidth + 56
+    radius: 16
+    color: Theme.pillAlt
+    Behavior on color { ColorAnimation { duration: 200 } }
+
+    // Squares off the top corners so only the bottom is rounded
+    Rectangle {
+      anchors.top: parent.top
+      width: parent.width
+      height: parent.radius
+      color: parent.color
+    }
+
+    RowLayout {
+      id: tabRow
+      anchors.centerIn: parent
+      spacing: 14
+
+      Text {
+        text: Qt.formatDateTime(sysClock.date, "dddd")
+        color: Theme.text
+        font.family: Theme.font
+        font.pixelSize: 15
+        horizontalAlignment: Text.AlignRight
+        Layout.preferredWidth: 120
+      }
+
+      Rectangle {
+        implicitWidth: clockRow.implicitWidth + 28
+        implicitHeight: 26
+        radius: 13
+        color: Theme.pill
+
+        RowLayout {
+          id: clockRow
+          anchors.centerIn: parent
+          spacing: 8
+
+          Rectangle { Layout.preferredWidth: 22; Layout.preferredHeight: 1; color: Theme.dim }
+          Text {
+            text: Qt.formatDateTime(sysClock.date, "HH : mm")
+            color: Theme.accent
+            font.family: Theme.font
+            font.pixelSize: 15
+            font.bold: true
+          }
+          Rectangle { Layout.preferredWidth: 22; Layout.preferredHeight: 1; color: Theme.dim }
+        }
+      }
+
+      Text {
+        text: Qt.formatDateTime(sysClock.date, "MMMM, d")
+        color: Theme.text
+        font.family: Theme.font
+        font.pixelSize: 15
+        Layout.preferredWidth: 120
+      }
+    }
+  }
+
+  // Right: icon-only status, label on hover
+  RowLayout {
+    anchors.right: parent.right
+    anchors.rightMargin: bar.slant / 2 + 20
+    anchors.verticalCenter: parent.verticalCenter
+    spacing: 16
+
+    Stat {
+      compact: true
       icon: "music_note"
       label: bar.nowPlaying
-      maxLabelWidth: 200
+      maxLabelWidth: 240
+      visible: bar.player !== undefined
     }
-  }
-
-  RowLayout {
-    id: centerGroup
-    anchors.centerIn: parent
-    spacing: 8
-
-    Pill { icon: "nest_clock_farsight_analog"; label: clock.value }
-    Workspaces { Layout.alignment: Qt.AlignVCenter }
-  }
-
-  RowLayout {
-    id: rightGroup
-    anchors.right: parent.right
-    anchors.verticalCenter: parent.verticalCenter
-    anchors.rightMargin: 24
-    spacing: 8
-
-    Pill { icon: "memory"; label: bar.cpuPercent + "%" }
-    Pill { icon: "storage"; label: bar.memUsed + " GB"; iconColor: Theme.warn }
-    Pill { icon: "volume_up"; label: vol.value + "%"; iconColor: Theme.cool }
-    Pill { icon: "speed"; label: net.value; iconColor: Theme.cool }
-
-    Pill {
-      icon: bar.vpnDown ? "key_off" : "vpn_key"
+    Stat { compact: true; icon: "memory"; label: bar.cpuPercent + "%" }
+    Stat { compact: true; icon: "storage"; label: bar.memUsed + " GB"; iconColor: Theme.warn }
+    Stat { compact: true; icon: "volume_up"; label: vol.value + "%"; iconColor: Theme.cool }
+    Stat { compact: true; icon: "speed"; label: net.value; iconColor: Theme.cool }
+    Stat {
+      compact: true
+      icon: "vpn_key"
       label: vpn.value
-      iconColor: bar.vpnDown ? Theme.warn : Theme.accent
+      visible: vpn.value !== "" && !bar.vpnDown
     }
-
-    // Theme switcher: left-click = next, right-click = previous
-    Pill {
+    Stat {
+      compact: true
       icon: "palette"
       label: Theme.name
       onClicked: Theme.next()

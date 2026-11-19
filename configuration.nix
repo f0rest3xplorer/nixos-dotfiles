@@ -98,7 +98,51 @@
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
 
-  programs.hyprland.enable = true;
+  programs.hyprland = {
+    enable = true;
+    package = pkgs.hyprland.overrideAttrs (old: {
+      # Passed to the build as an environment variable
+      vmwHelper = ''
+        #define DRM_VMW_UNREF_SURFACE 10
+
+        struct drmVmwSurfaceArg {
+            int32_t  sid;
+            uint32_t handleType;
+        };
+
+        // vmwgfx prime-imports surface-backed dmabufs as TTM handles, not GEM,
+        // so GEM_CLOSE fails with EINVAL; close them via DRM_VMW_UNREF_SURFACE.
+        static int closeVmwGFXHandle(int fd, uint32_t handle) {
+            drmVersionPtr version = drmGetVersion(fd);
+            bool isVmwgfx = version && version->name && strncmp(version->name, "vmwgfx", version->name_len) == 0;
+            if (version)
+                drmFreeVersion(version);
+            if (!isVmwgfx)
+                return -1;
+
+            struct drmVmwSurfaceArg arg = {(int32_t)handle, 0};
+            return drmCommandWrite(fd, DRM_VMW_UNREF_SURFACE, &arg, sizeof(arg));
+        }
+
+        bool CLinuxDMABUFParamsResource::commence() {'';
+
+      postPatch = (old.postPatch or "") + ''
+        f=src/protocols/LinuxDMABUF.cpp
+
+        substituteInPlace "$f" \
+          --replace-fail '#include <sys/mman.h>' '#include <sys/mman.h>
+        #include <cstring>'
+
+        substituteInPlace "$f" \
+          --replace-fail 'bool CLinuxDMABUFParamsResource::commence() {' "$vmwHelper"
+
+        substituteInPlace "$f" \
+          --replace-fail \
+            'if (drmCloseBufferHandle(PROTO::linuxDma->m_mainDeviceFD.get(), handle)) {' \
+            'if (drmCloseBufferHandle(PROTO::linuxDma->m_mainDeviceFD.get(), handle) != 0 && closeVmwGFXHandle(PROTO::linuxDma->m_mainDeviceFD.get(), handle) != 0) {'
+      '';
+    });
+  };
 
   environment.sessionVariables.NIXOS_OZONE_WL = 1;
 

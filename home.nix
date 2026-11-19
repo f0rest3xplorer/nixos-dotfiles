@@ -53,18 +53,32 @@ in
             animations = {
                enabled = false;
             };
-            decoration = {
-               blur = { enabled = false; };
-               shadow = { enabled = false; };
+            general = {
+                border_size = 2;
+                gaps_in = 6;     # between windows
+                gaps_out = 20;   # screen edge, matches your bar's 20px side margins
+                col = {
+                  active_border   = "rgba(3dd1b0ff)";
+                  inactive_border = "rgba(1c2f31ff)";
+                };
+              };
 
-               rounding = 12;
-            };
+              decoration = {
+                rounding = 12;
+                active_opacity = 1.0;
+                inactive_opacity = 0.92;
+                blur   = { enabled = false; };
+                shadow = { enabled = false; };
+              };
+
+              cursor = { no_hardware_cursors = true; };
+              
          };
 
          # window rules (Nix syntax, not Lua)
          window_rule = {
             match.class = "foot";
-            opacity = "0.8 override 0.8 override 1.0 override";
+            opacity = "0.93 override 0.8 override 1.0 override";
          };
 
          # key bindings
@@ -133,8 +147,7 @@ in
                "hyprland.start"
                (lib.generators.mkLuaInline ''
                   function()
-                    hl.exec_cmd("env QT_QUICK_BACKEND=software ${pkgs.quickshell}/bin/quickshell > /tmp/qs.log 2>&1")
-                    hl.exec_cmd("swaybg -i /home/f0rest3xplorer/Pictures/artemis.jpg -m fill &")
+                    hl.exec_cmd("quickshell")
                   end
                '')
             ];

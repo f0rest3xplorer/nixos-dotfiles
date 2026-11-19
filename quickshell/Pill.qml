@@ -9,6 +9,12 @@ Rectangle {
   property color iconColor: Theme.accent
   property int maxLabelWidth: 400
 
+  property bool shown: true
+
+  visible: opacity > 0
+  opacity: shown ? 1 : 0
+  Behavior on opacity { NumberAnimation { duration: 180 } }
+
   signal clicked()
   signal rightClicked()
 

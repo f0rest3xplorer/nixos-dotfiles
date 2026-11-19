@@ -2,19 +2,18 @@ import Quickshell
 import Quickshell.Io
 import QtQuick
 
-Scope {
+Item {
   id: root
 
   property string command: ""
-  property int interval: 3000
+  property int interval: 5000
   property string value: ""
 
   Process {
     id: proc
     command: ["sh", "-c", root.command]
-    running: true
     stdout: StdioCollector {
-      onStreamFinished: root.value = this.text.trim()
+      onStreamFinished: root.value = text.trim()
     }
   }
 
@@ -22,6 +21,8 @@ Scope {
     interval: root.interval
     running: true
     repeat: true
-    onTriggered: proc.running = true
+    triggeredOnStart: true
+    // Skip the tick if the last run hasn't finished (the net poller sleeps 1s)
+    onTriggered: if (!proc.running) proc.running = true
   }
 }

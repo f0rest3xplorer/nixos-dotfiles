@@ -30,6 +30,8 @@ let
 in
 
 {
+  imports = [ ./qs-theme.nix ];
+
    home.username = "f0rest3xplorer";
    home.homeDirectory = "/home/f0rest3xplorer";
    home.stateVersion = "26.05";
